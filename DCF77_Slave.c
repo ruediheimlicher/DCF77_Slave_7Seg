@@ -137,6 +137,8 @@
 #define STARTDELAYBIT	0
 #define HICOUNTBIT		1
 
+#define TAKTFAKTOR   1 // Anzahl MHz der Taktfrequenz
+
 struct time Zeit;
 uint8_t wtag[]=		{ null, ein, zwei, drei, vier, fuenf, sechs, sieben};
 uint8_t num[] =		{sign0, sign1, sign2, sign3, sign4, sign5, sign6, sign7, sign8, sign9 };
@@ -163,7 +165,7 @@ uint8_t				ImpulsdauerH=0;
 uint8_t				TastendauerL=0;
 uint8_t				TastendauerH=0;
 uint8_t				Displaymode=0; //Zeit anzeigen
-volatile uint8_t  	PausenOverflowCounter=0;
+volatile uint16_t  	PausenOverflowCounter=0;
 uint8_t				dcf77OK=1;
 uint8_t				segDelay=20; //Delay für Segmentanzeige
 uint16_t			segDimm=0;
@@ -779,7 +781,7 @@ void main (void)
 				dauer=(uint16_t)TCNT1;
 				int par=0;
 				
-				if (TCNT1<100)//Kurzer Impuls
+				if (TCNT1<100*TAKTFAKTOR)//Kurzer Impuls
 				{
                
 					eins=0;
@@ -787,7 +789,7 @@ void main (void)
 //					PORTC &= ~(1<<PORTC3);	//langer Impuls aus
 //					PORTC |= (1<<PORTC2);	//kurzer Impuls ein
 				}
-				else if (TCNT1<190)	//langer Impuls
+				else if (TCNT1<180*TAKTFAKTOR)	//langer Impuls
 				{
                timer2div++;
 					eins=1;
@@ -950,6 +952,7 @@ void main (void)
 				TCCR2 |= (1<<CS20)|(1<<CS22);	//Takt /1024
 				TCNT2=0x00;
             timer0div &= ~(1<<4);
+            timer2div=0;
 				PausenOverflowCounter=0;
 				
 //				DCF_busy=0; // Impuls fertig
@@ -962,18 +965,26 @@ void main (void)
 				//Pause
 				if (TIFR &(1<<TOV2))//Overflow Flag Zaehler2 gesetzt 
 				{
+               timer2div ++;
+               if (timer2div > TAKTFAKTOR)
+               {
+               //   PausenOverflowCounter++;
+               }
+               
+               
                timer0div ^= (1<<4);
                if (timer0div & (1<<4))
                {
                   PausenOverflowCounter++;
                }
+               
 					TIFR |=(1<<TOV2);//Interrupt Flag loeschen (Atmega complete p. 71)
 				}
             
-				if (PausenOverflowCounter>20) // 1 MHz
+				if (PausenOverflowCounter>20*TAKTFAKTOR) // 1 MHz
             //if (PausenOverflowCounter>80) // 4 Mhz
 				{
-					//Sekunde 59
+					//                Sekunde 59
 					bitzeiger=0;
 					stunden=0;
 					stundenpar=0;
