@@ -167,7 +167,7 @@ uint8_t				TastendauerH=0;
 uint8_t				Displaymode=0; //Zeit anzeigen
 volatile uint16_t  	PausenOverflowCounter=0;
 uint8_t				dcf77OK=1;
-uint8_t				segDelay=20; //Delay für Segmentanzeige
+uint8_t				segDelay=10; //Delay für Segmentanzeige
 uint16_t			segDimm=0;
 uint16_t			Anzeigewert=0;
 uint16_t			zaehler=0;
@@ -778,7 +778,7 @@ void main (void)
 			//	PORTC &= ~(1<<PORTC1);//Sicherheitshalber Sekundenled löschen
 			if (DCFImpuls) //Impuls ist fertig
 			{
-				dauer=(uint16_t)TCNT1;
+				//dauer=(uint16_t)TCNT1;
 				int par=0;
 				
 				if (TCNT1<100*TAKTFAKTOR)//Kurzer Impuls
@@ -791,7 +791,7 @@ void main (void)
 				}
 				else if (TCNT1<180*TAKTFAKTOR)	//langer Impuls
 				{
-               timer2div++;
+               
 					eins=1;
 					//PORTC &= ~(1<<PORTC4);	//Overflow Impuls aus
 //					PORTC &= ~(1<<PORTC2);	//kurzer Impuls aus
@@ -966,23 +966,25 @@ void main (void)
 				if (TIFR &(1<<TOV2))//Overflow Flag Zaehler2 gesetzt 
 				{
                timer2div ++;
-               if (timer2div > TAKTFAKTOR)
+               if (timer2div & 0x02)
                {
-               //   PausenOverflowCounter++;
+                  //PausenOverflowCounter++;
+                  //timer2div=0;
                }
                
                
                timer0div ^= (1<<4);
                if (timer0div & (1<<4))
                {
-                  PausenOverflowCounter++;
+                  //PausenOverflowCounter++;
                }
-               
+               PausenOverflowCounter++;
 					TIFR |=(1<<TOV2);//Interrupt Flag loeschen (Atmega complete p. 71)
 				}
             
-				if (PausenOverflowCounter>20*TAKTFAKTOR) // 1 MHz
-            //if (PausenOverflowCounter>80) // 4 Mhz
+				//if (PausenOverflowCounter>20) // 1 MHz
+            
+            if (PausenOverflowCounter>40*TAKTFAKTOR) // 1 Mhz
 				{
 					//                Sekunde 59
 					bitzeiger=0;
@@ -1041,22 +1043,22 @@ void main (void)
 			case 1://Datum
 			{
 				Anzeigewert=Zeit.kalendermonat+100*Zeit.kalendertag;//+10000*Zeit.wochentag;
-				Anzeigewert= 9991;
+				//Anzeigewert= 9991;
 			}break;
 			case 2://Jahr
 			{
 				Anzeigewert=Zeit.kalenderjahr;//+0x7d0+10000*Zeit.wochentag;
-            Anzeigewert= 9992;
+            //Anzeigewert= 9992;
 			}break;
 			case 3://Wochentag
 			{
 				Anzeigewert=Zeit.wochentag;// +10000*Zeit.wochentag;
-            Anzeigewert= 9993;
+            //Anzeigewert= 9993;
             
 			}break;
 			case 4:
 			{
-			Anzeigewert=9994;
+			Anzeigewert=9999;
 				
 			}break;	
 		
@@ -1104,7 +1106,7 @@ void main (void)
 			PORTD=0x00;//Display löschen
 		}
 		
-		if (digitdelaycountH==segDelay)//Anzeigedauer erreicht
+		if (digitdelaycountH==segDelay) //Anzeigedauer erreicht
 		{
 			digitdelaycountH=0;//neue Runde
 		}
