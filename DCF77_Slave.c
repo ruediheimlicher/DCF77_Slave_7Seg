@@ -137,7 +137,7 @@
 #define STARTDELAYBIT	0
 #define HICOUNTBIT		1
 
-#define TAKTFAKTOR   1 // Anzahl MHz der Taktfrequenz
+#define TAKTFAKTOR   8 // Anzahl MHz der Taktfrequenz
 
 struct time Zeit;
 uint8_t wtag[]=		{ null, ein, zwei, drei, vier, fuenf, sechs, sieben};
@@ -224,6 +224,9 @@ DDRC |= (1<<DDC0);		//	Pin 0 von PORT C als Ausgang fuer Sekunden-LED
 
 DDRC &= ~(1<<DDC1);		//	Pin 1 von PORT C als Eingang fuer Modeselect
 PORTC |= (1<<PORTC1);	// Den zugehšrigen internen Pull-Up Widerstand aktivieren
+
+   DDRC |= (1<<DDC2);		//	Pin 2 von PORT C als Ausgang
+   PORTC |= (1<<PORTC2);	// Den zugehšrigen internen Pull-Up Widerstand aktivieren
 
 DDRC &= ~(1<<DDC4);		//	Pin 4 von PORT C als Eingang fuer SCL
 PORTC |= (1<<PORTC4);	//	Pull-Up Widerstand aktivieren
@@ -329,7 +332,7 @@ void main (void)
 	{
 		wdt_reset();
 		loopcount0++;
-		if (loopcount0==0x0FFF)
+		if (loopcount0==TAKTFAKTOR*0x0FFF)
 		{
 			loopcount0=0;
 			LOOPLEDPORT ^=(1<<LOOPLED);
@@ -789,9 +792,8 @@ void main (void)
 //					PORTC &= ~(1<<PORTC3);	//langer Impuls aus
 //					PORTC |= (1<<PORTC2);	//kurzer Impuls ein
 				}
-				else if (TCNT1<180*TAKTFAKTOR)	//langer Impuls
+				else if (TCNT1<200*TAKTFAKTOR)	//langer Impuls  !150!, 180, 190, 200
 				{
-               
 					eins=1;
 					//PORTC &= ~(1<<PORTC4);	//Overflow Impuls aus
 //					PORTC &= ~(1<<PORTC2);	//kurzer Impuls aus
@@ -954,7 +956,8 @@ void main (void)
             timer0div &= ~(1<<4);
             timer2div=0;
 				PausenOverflowCounter=0;
-				
+				PORTC &= ~(1<<PORTC2);//Pause Start
+            
 //				DCF_busy=0; // Impuls fertig
 				sei();
 						
@@ -1010,7 +1013,7 @@ void main (void)
 					}
 					
 					dcf77OK=1;
-					//PORTC &= ~(1<<PORTC2);//kurzer Impuls aus
+					PORTC |= (1<<PORTC2);//kurzer Impuls aus
 					//PORTC &= ~(1<<PORTC3);//langer Impuls aus
 							
 							//				PORTC |= (1<<PORTC4);	//Overflow LED ein
