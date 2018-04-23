@@ -6,6 +6,7 @@ uint8_t kalendertagBits[] = { 1,2,4,8,10,20 };
  uint8_t fehler;
 
 
+
 struct time {
   uint8_t sekunde;
   uint8_t minute;

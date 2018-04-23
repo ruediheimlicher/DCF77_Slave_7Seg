@@ -39,7 +39,17 @@ Abgefangene Fehlbedienung durch den Master:
 
  */ 
  
+#define TWI_PORT        PORTC
+#define TWI_DDR         DDRC
+#define TWI_PIN         PINC
+#define SCLPIN         PORTC5
+#define SDAPIN         PORTC4
 
+#define TWI_WAIT_BIT      3
+#define TWI_OK_BIT      4
+
+#define STARTDELAYBIT   0
+#define HICOUNTBIT      1
 
 
 //%%%%%%%% von Benutzer konfigurierbare Einstellungen %%%%%%%%
@@ -65,6 +75,9 @@ volatile uint8_t rxdata=0;
 
 //%%%%%%%% Funktionen, die vom Hauptprogramm aufgerufen werden können %%%%%%%%
  
+
+volatile uint8_t SlaveStatus = 0;
+
 /*Initaliserung des TWI-Inteface. Muss zu Beginn aufgerufen werden, sowie bei einem Wechsel der Slave Adresse
 Parameter: adr: gewünschte Slave-Adresse*/
 void init_twi_slave (uint8_t adr);
@@ -125,6 +138,8 @@ void init_twi_slave (uint8_t adr)
 	{
 		txbuffer[ii]=0;
 	}
+   SlaveStatus=0;
+   SlaveStatus |= (1<<TWI_WAIT_BIT);
 
 }
 
@@ -248,6 +263,35 @@ ISR (TWI_vect)
 	} //end.switch (TW_STATUS)
 } //end.ISR(TWI_vect)
 
+uint8_t i2c_debloc(void)
+{   
+   TWCR &= ~(1<<TWEN); //disable TWI
+   TWI_DDR &= ~(1<<SDAPIN);   // SDA-Pin als EINgang
+   TWI_PORT |= (1<<SDAPIN);  // HI
+   TWI_DDR &= ~(1<<SCLPIN);   // SCL-Pin als EINgang
+   TWI_PORT |= (1<<SCLPIN);  // HI
+   _delay_ms(2);
+   TWI_DDR |= (1<<SCLPIN);   // SCL-Pin als Ausgang
+   TWI_PORT |= (1<<SCLPIN);  // HI
+   _delay_ms(2);
+   uint8_t i=0x0F;
+   while (i ) 
+   {
+      // SCL-Pulse schicken, um Slave zu deblockieren
+      TWI_PORT &= ~(1<<SCLPIN); // LO
+      _delay_ms(1);
+      TWI_PORT |= (1<<SCLPIN);   // HI
+      _delay_ms(10);
+      i--;
+      if (TWI_PIN & (1<<SDAPIN)) // SDA ist wieder HI
+      {
+         
+         return i;
+      }
+      
+   }
+   return i;
+}
 
 #endif //#ifdef _TWISLAVE_H
 ////Ende von twislave.c////

@@ -126,9 +126,12 @@
 
 
 
-#define SDAPIN			4
-#define SCLPIN			5
+
+
 #define WDTBIT			7
+
+
+
 
 #define LOOPLEDPORT		PORTC
 #define LOOPLED			3
@@ -136,6 +139,7 @@
 
 #define STARTDELAYBIT	0
 #define HICOUNTBIT		1
+#define STARTDELAY   0x00FF
 
 #define TAKTFAKTOR   8 // Anzahl MHz der Taktfrequenz
 
@@ -168,7 +172,7 @@ uint8_t				Displaymode=0; //Zeit anzeigen
 volatile uint16_t  	PausenOverflowCounter=0;
 uint8_t				dcf77OK=1;
 uint8_t				segDelay=10; //Delay für Segmentanzeige
-uint16_t			segDimm=0;
+uint16_t			segDimm=3;
 uint16_t			Anzeigewert=0;
 uint16_t			zaehler=0;
 uint16_t			dauer=0;
@@ -312,6 +316,12 @@ void main (void)
 	uint8_t eepromWDT_Count0=eeprom_read_byte(&WDT_ErrCount0); 
 	uint8_t eepromWDT_Count1=eeprom_read_byte(&WDT_ErrCount1);
 
+   if (eepromWDT_Count0==0xFF)
+   {
+      eepromWDT_Count0=0;
+      
+   }
+
 //	PORTB = 0xFF;
 //	delay_ms(200);
 //	PORTB = 0x00;
@@ -347,7 +357,30 @@ void main (void)
 
 		
 		/**	Beginn Startroutinen	***********************/
-		/*
+      /*
+      // wenn Startbedingung vom Master:  TWI_slave initiieren (von OG2)
+      if (SlaveStatus & (1<<TWI_WAIT_BIT)) 
+      {
+         if ((TWI_PIN & (1<<SCLPIN))&&(!(TWI_PIN & (1<<SDAPIN))))// Startbedingung vom Master: SCL HI und SDA LO
+         {
+            init_twi_slave (SLAVE_ADRESSE);
+            sei();
+            SlaveStatus &= ~(1<<TWI_WAIT_BIT);
+            SlaveStatus |= (1<<TWI_OK_BIT); // TWI ist ON
+            
+            // StartDelayBit zuruecksetzen
+            
+         }
+      }
+       */
+      
+      
+ 
+      // *   Ende Startroutinen   ***********************
+      
+
+      
+		
 		// Startfunktion: SCL und SDA pruefen, ob lang genug beide HI sind
 		if (PINC & (1<<4) && PINC & (1<<5)) // SCL UND SDA ist HI
 		{
@@ -396,13 +429,10 @@ void main (void)
 		}
 		
 		// TWI-Start detektieren
-		
 		// Bit 7 in eepromWDT_Count ist noch gesetzt nach wdt: warten auf Start des Master
 		
 		if ((eepromWDT_Count0 & (1 << WDTBIT)) && (!(PINC & (1<<SDAPIN))) && PINC & (1<<SCLPIN)) // TWI-Start vonm Master
 		{
-			
-			
 			// Startdelay abgelaufen, HI_Count IST GESETZT und (eepromWDT_Count1 > eepromWDT_Count0), also pendenter wdt-reset
 			if ((SlaveStatus & (1<<STARTDELAYBIT)) && (SlaveStatus & (1<<HICOUNTBIT)))
 				
@@ -463,12 +493,12 @@ void main (void)
 			}
 						
 							
-		*/										
+												
 								
 		// TWI-PINs ueberwachen
 		/************ SCL SDA checken *************/
-      /*
-		if ((!(PINC & (1<<SCLPIN))) && PINC & (1<<SDAPIN))		// SDA ist HI und SCL ist LO (warten auf Ack)
+      
+		if ((!(PINC & (1<<SCL_PIN))) && PINC & (1<<SDA_PIN))		// SDA ist HI und SCL ist LO (warten auf Ack)
 	//	if ((!(PINC & (1<<4)) || !(PINC & (1<<5)))) 	// SCL oder SDA ist low
 		{
 			// HICOUNTBIT zuruecksetzen
