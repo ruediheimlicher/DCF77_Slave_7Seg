@@ -143,7 +143,7 @@ struct time Zeit;
 uint8_t wtag[]=		{ null, ein, zwei, drei, vier, fuenf, sechs, sieben};
 uint8_t num[] =		{sign0, sign1, sign2, sign3, sign4, sign5, sign6, sign7, sign8, sign9 };
 uint8_t digit[] =	{ digit0, digit1, digit2, digit3, digit4, digit5};
-volatile uint16_t 	display_value=0;		// Startwert. 
+volatile uint16_t 	display_value=1;		// Startwert. 
 
 //Datumwerte	
 volatile uint8_t  	sekunden=0;
